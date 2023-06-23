@@ -5,11 +5,14 @@ taxonomy:
 ---
 
 `mender-monitor` supports _monitoring subsystems_ which perform the actual
-monitoring and report to the main daemon. Currently, there are three subsystems
+monitoring and report to the main service. Currently, there are three subsystems
 available out-of-the-box: for services, log files and D-Bus signals, but you can
 easily extend it and implement your own.
 
-In addition to the present documentation, we also provide a command line tool: `mender-monitorctl` to ease the interaction with the internals
+#### mender-monitorctl
+
+In addition to the present documentation, we also provide a command line tool:
+`mender-monitorctl` to ease the interaction with the internals
 of the Monitor add-on on a device. The tool has online help which you can consult
 for a summary of options and examples by running:
 
@@ -17,10 +20,12 @@ for a summary of options and examples by running:
 mender-monitorctl help
 ```
 
-The daemon supports the following directory structure:
+The `mender-monitor` service supports the following directory structure:
+
 ```bash
 tree /etc/mender-monitor/
 ```
+
 > ```bash
 > /etc/mender-monitor
 > `-- monitor.d
@@ -35,14 +40,14 @@ tree /etc/mender-monitor/
 >     `-- service.sh
 > ```
 
-In the above example, we enabled the log and service subsystems
+In the above example, we enabled the _log_ and _service_ subsystems
 by providing links from the `enabled` to the `available` directory.
 Each file name in the latter consists of the subsystem name ("service",
-"log" or "dbus"), an underscore, and a name (being an arbitrary
-string of letters to distinguish between the files). The main daemon
-follows links from the `enabled` directory and sources them to set
+"log", "dbus", etc), an underscore, and a name (being an arbitrary
+string of letters to distinguish between the files). The mender-monitor
+service follows links from the `enabled` directory and sources them to set
 the environment for the execution of `log.sh` and `service.log`, using
-the first part of a file name to decide which file from the `monitor.d`
+the first part of a file name to decide which file from `monitor.d`
 to run. In other words: we take the first part before an underscore
 of the file name from the `enabled` directory, append ".sh", prepend
 with the path to monitor.d and source resulting path, executing
@@ -53,10 +58,22 @@ The specific check's implementation is common and we store it in
 the `monitor.d/<subsystem_name>.sh` files. You can easily extend
 the `mender-monitor` service implementing your custom subsystems.
 
-## Service
+By using `create` and `delete`, `mender-monitorctl` will create or delete a
+_check_ from a subsystem from the `monitor.d` folder, and place it under
+`monitor.d/available` folder. This check will include the enviroment
+variables for the subsystem to be executed by the `mender-monitor` service.
 
-Service monitoring expects two variables from the files in the
-`available` directory: `SERVICE_NAME` and `SERVICE_TYPE`.
+By runing `mender-monitorctl` with the `enable` or `disable` parameters,
+it will create a _symbolic link_  inside the `enabled` folder to the right
+_check_ from the `available` folder. From this folder the `mender-monitor`
+service executes the defined subsystems based on the enabled checks.
+
+## Default monitoring subsystems
+
+### Service
+
+The Service monitoring subsystem expects two variables from the
+files in the `available` directory: `SERVICE_NAME` and `SERVICE_TYPE`.
 
 For example, a `service_cron.sh` file could contain:
 
@@ -67,10 +84,10 @@ SERVICE_TYPE="systemd"
 
 which means that we monitor the `cron` systemd service.
 
-## Log
+### Log
 
-The log monitoring works similarly. The `log_auth_root_session.sh` file
-from the above examples could contain:
+The log monitoring subsystem works similarly. The `log_auth_root_session.sh`
+file from the above examples could contain:
 
 ```bash
 SERVICE_NAME="auth_root_session"
@@ -91,7 +108,7 @@ the [Perl-compatible regular expressions](https://www.pcre.org/).
 If you have no support for `-P`, it falls back to the `-E` flag, and
 eventually uses plain `grep`.
 
-### Capturing logs from arbitrary sources
+#### Capturing logs from arbitrary sources
 
 With the log subsystem you are not limited to log files only. You can get the logs
 from any command. You can achieve it via so-called _log streamline extension_.
@@ -112,7 +129,7 @@ the `journalctl` command can be a source of logs, but we do not limit the mechan
 to any particular command. The only requirement is that the command prints
 to standard output so that the log subsystem will parse it.
 
-#### Docker logs
+##### Docker logs
 
 One example of a command that can output data to standard error is `docker logs`.
 In case you want to get alerts based on the patterns that maybe present
@@ -136,15 +153,14 @@ With the above you can configure alerting based on any source.
 Please note that the `-f` flag above is essential, the command that you pass
 via the `@` extension, must not exit.
 
+##### Docker events
 
-#### Docker events
-
-The Log Subsystem is a base for so-called _pseudo subsystems_. One of them
+The log subsystem is a base for so-called _pseudo subsystems_. One of them
 is the `dockerevents` subsystem, which you can use to monitor any events as reported by `docker events`
 command.
 
-For instance, to monitor for `kill` event on a container named `scanner` you need to create a check with `mender-monitorctl`
-command and enable it in the following way:
+For instance, to monitor for `kill` event on a container named `scanner` you need to create a check with
+`mender-monitorctl` command and enable it in the following way:
 
 ```bash
 sudo mender-monitorctl create dockerevents scanner_kill scanner kill 16
@@ -156,10 +172,11 @@ With the above configuration you will receive a `CRITICAL` alert if someone or s
 This will lead the Mender UI to present the device in a critical monitoring state. Since there is no natural
 way to recover from this situation, we are using the last and optional argument
 to the `mender-monitorctl create dockerevents` command which stands for the number of seconds
-after which the Mender Monitor daemon sends an automatic OK. In that way after 16s without
+after which the Mender Monitor daemon sends an automatic _OK_. In that way after 16s without
 a `kill` event on the container the device will recover to normal state.
 
 The resulting check uses the log monitor, as you can see with:
+
 ```bash
 cat /etc/mender-monitor/monitor.d/available/log_scanner_kill.sh
 ```
@@ -176,7 +193,7 @@ cat /etc/mender-monitor/monitor.d/available/log_scanner_kill.sh
 > LOG_ALERT_TYPE=docker_event
 > ```
 
-### Log pattern expiration
+#### Log pattern expiration
 
 Once the pattern shows up in the logs, Mender Monitor add-on will send a critical alert.
 Technically there would be no way out of this situation; the device would stay
@@ -188,7 +205,7 @@ command.
 
 See also the configuration of the [DEFAULT_LOG_PATTERN_EXPIRATION_SECONDS](../30.Advanced-configuration/docs.md#DEFAULT_LOG_PATTERN_EXPIRATION_SECONDS).
 
-## D-Bus
+### D-Bus
 
 The D-Bus monitoring subsystem expects three variables from the files in the
 `available` directory: `DBUS_NAME`, `DBUS_PATTERN` and `DBUS_WATCH_EXPRESSION`.
@@ -205,3 +222,56 @@ Every time a D-Bus signal matching the watch expression is received,
 an alert will be triggered and sent from the monitoring subsystem.
 You can adapt the configuration to any D-Bus signal and pattern based
 on your use case.
+
+## Alert levels
+
+From the `lib/monitor-lib.sh` library, you will have access to the function `monitor_send_alert`,
+where you can specify with `LOG_ALERT_LEVEL` or `DBUS_ALERT_LEVEL` and if not, it will
+default to the `DEFAULT_LOG_ALERT_LEVEL` or `DEFAULT_DBUS_ALERT_LEVEL` variable from your
+ `/usr/share/mender-monitor/config/config.sh` configuration file, depending on the _subsystem_.
+
+The levels are:
+
+* _CRITICAL_: It means your attention is required. Mender server will display a red icon on the Web UI
+* _OK_: It means everything went back to normal, the alert is cleared.
+
+The alerts will be stored in a stack while offline, the ammount of alerts stores will be defined
+in [`ALERT_OFFLINE_STORE_MAX_COUNT`](../../09.Add-ons/20.Monitor/30.Advanced-configuration/docs.md#alert_offline_store_max_count).
+
+### Alert cleaning
+
+The alerts can be cleared by two mechanisms:
+
+* **Sending a OK alert from the subsystem**
+
+By sending an _OK_ alert you can clean your alert leve. Assuming you did not implement it on your
+subsystem, then you can force it by running a command similar to the one below (assuming a _service subsystem_):
+
+```bash
+SERVICE_NAME = "your-service-name"
+cd /usr/share/mender-monitor
+.lib/monitor-lib.sh 
+monitor_send_alert OK "Service ${SERVICE_NAME} running" "The main process is present again" "${SERVICE_NAME}" "running" "service"
+```
+
+* **Defining an expiration time for the alert**
+
+Another option is defining a timout when creating an alert. When creating a _check_ with mender-monitorctl,
+you can define a "Duration of match validity" as the last parameter. In the example below, the alert will live
+for 60 seconds, and then it will trigger an _OK_ alert.
+
+```bash
+#                       "Subsystem"  "Arbitrary name"  "Pattern"    "Log file"       "Duration of match validity [Optional]"
+mender-monitorctl create    log        my-app            ERROR     /root/my-app.log   60
+```
+
+You can also define it as `LOG_PATTERN_EXPIRATION` (for the log subsystem and derivaties) and  as part of the _check_  definition in `mender-monitor.d/available`.
+
+Take into consideration that in your `/usr/share/mender-monitor/config/config.sh` file, there are default expiration times expressed as
+
+```bash
+DEFAULT_LOG_PATTERN_EXPIRATION_SECONDS=86400
+DEFAULT_DBUS_ALERT_EXPIRATION_SECONDS=86400
+```
+
+After this time, an _OK_ alert will be triggered.
