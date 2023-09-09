@@ -6,15 +6,56 @@ taxonomy:
 
 `mender-monitor` supports _monitoring subsystems_ which perform the actual
 monitoring and report to the main service. Currently, there are three subsystems
-available out-of-the-box: for services, log files and D-Bus signals, but you can
-easily extend it and implement your own.
+available out-of-the-box: `service` for monitoring systemd services, `log` for monitoring files text patterns, and `dBus`for monitoring D-Bus signals. You can easily extend the `mender-monitor` service implementing your custom subsystems by using set the of Bash functions located at `/usr/share/mender-monitor/lib/`.
+
+#### Check definition
+Before executing the monitoring subsystem script, `mender-monitor` sets the enviriotment
+using a special script called check defition. This kind of script contains the customization
+in form as variables used by the monitoring subsystems.
+
+The check definition file name convention follows the next structure:
+
+```
+<monitoring_subsystem_name>_<check_name>.sh
+```
+
+The value for `check_name` is an arbitrary string of letters to distinguish between the check definitions. The value for the `monitoring_subsystem_name` will depends of the installed monitoring subsystems. You can check the installed monitoring subsystems by running:
+
+```bash
+ls -lAh /etc/mender-monitor/monitor.d | grep -v '^d'
+```
+
+
+An example of a check definition can be found at:
+
+```bash
+cat /etc/mender-monitor/monitor.d/available/log_mender_client.sh
+```
+
+>```bash
+># Copyright 2022 Northern.tech AS
+>#
+>#    All Rights Reserved
+>
+>#
+># Mender client log monitor
+>#
+>
+>SERVICE_NAME="Mender client error log"
+>LOG_PATTERN=".*Error.*"
+>LOG_FILE="@journalctl -u mender-client -f"
+>```
+
+For this example, the file sets the variables for the pattern the log monitoring
+subsystem will use to check and what specific file. In this case is the output of
+ `journalctl -u mender-client -f` for the pattern `.*Error.*`.
+
+The check definitions can be also created using the `mender-monitorctl` command line tool utility.
 
 #### mender-monitorctl
 
-In addition to the present documentation, we also provide a command line tool:
-`mender-monitorctl` to ease the interaction with the internals
-of the Monitor add-on on a device. The tool has online help which you can consult
-for a summary of options and examples by running:
+We provide a command line tool called `mender-monitorctl` to ease the interaction
+with the internals of the Monitor add-on on a device. You can consult using the parameter `help` for a summary of options and examples. To access it run the following:
 
 ```bash
 mender-monitorctl help
@@ -40,33 +81,29 @@ tree /etc/mender-monitor/
 >     `-- service.sh
 > ```
 
-In the above example, we enabled the _log_ and _service_ subsystems
-by providing links from the `enabled` to the `available` directory.
-Each file name in the latter consists of the subsystem name ("service",
-"log", "dbus", etc), an underscore, and a name (being an arbitrary
-string of letters to distinguish between the files). The mender-monitor
-service follows links from the `enabled` directory and sources them to set
-the environment for the execution of `log.sh` and `service.log`, using
-the first part of a file name to decide which file from `monitor.d`
-to run. In other words: we take the first part before an underscore
+From the above example, we enabled the _log_ and _service_ subsystems
+by providing links from the `enabled` to the `available` directory
+where the check defintions are stored.
+
+The `mender-monitor` service follows links from the `enabled` directory and sources them to set
+the environment for the execution of `log.sh` and `service.sh`, using the first part of a file name to decide which monitoring subsystem from `monitor.d` directory
+to run. 
+
+In other words: we take the first part before an underscore
 of the file name from the `enabled` directory, append ".sh", prepend
-with the path to monitor.d and source resulting path, executing
+with the path to `monitor.d` and source resulting path, executing
 the subsystem check, using the contents of the file in `enabled` directory
 as the environment.
-
-The specific check's implementation is common and we store it in
-the `monitor.d/<subsystem_name>.sh` files. You can easily extend
-the `mender-monitor` service implementing your custom subsystems.
-
-By using `create` and `delete`, `mender-monitorctl` will create or delete a
-_check_ from a subsystem from the `monitor.d` folder, and place it under
-`monitor.d/available` folder. This check will include the enviroment
-variables for the subsystem to be executed by the `mender-monitor` service.
 
 By runing `mender-monitorctl` with the `enable` or `disable` parameters,
 it will create a _symbolic link_  inside the `enabled` folder to the right
 _check_ from the `available` folder. From this folder the `mender-monitor`
 service executes the defined subsystems based on the enabled checks.
+
+By using `create` and `delete`, `mender-monitorctl` will create or delete a
+_check definition_ from a monitoring subsystem from the `monitor.d` folder, and place
+it under `monitor.d/available` folder. This check will include the enviroment
+variables for the subsystem to be executed by the `mender-monitor` service.
 
 ## Default monitoring subsystems
 
@@ -223,12 +260,13 @@ an alert will be triggered and sent from the monitoring subsystem.
 You can adapt the configuration to any D-Bus signal and pattern based
 on your use case.
 
-## Alert levels
+
+### Alert levels
 
 From the `lib/monitor-lib.sh` library, you will have access to the function `monitor_send_alert`,
 where you can specify with `LOG_ALERT_LEVEL` or `DBUS_ALERT_LEVEL` and if not, it will
 default to the `DEFAULT_LOG_ALERT_LEVEL` or `DEFAULT_DBUS_ALERT_LEVEL` variable from your
- `/usr/share/mender-monitor/config/config.sh` configuration file, depending on the _subsystem_.
+ `/usr/share/mender-monitor/config/config.sh` configuration file, depending on the _monitoring subsystem_.
 
 The levels are:
 
@@ -256,7 +294,7 @@ monitor_send_alert OK "Service ${SERVICE_NAME} running" "The main process is pre
 
 * **Defining an expiration time for the alert**
 
-Another option is defining a timout when creating an alert. When creating a _check_ with mender-monitorctl,
+Another option is defining a timout when creating an alert. When creating a _check definition_ with `mender-monitorctl`,
 you can define a "Duration of match validity" as the last parameter. In the example below, the alert will live
 for 60 seconds, and then it will trigger an _OK_ alert.
 

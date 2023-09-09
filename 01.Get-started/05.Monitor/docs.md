@@ -15,47 +15,53 @@ allows you to monitor various parts of your system.
 
 ## Prerequisites
 
-To follow this tutorial and perform the examples, you will need to [install the Monitor
-Add-on](../../09.Add-ons/20.Monitor/10.Installation/docs.md) and the [Demo monitors package](../../10.Downloads/docs.md#demo-monitors) on your device. If
+To follow this tutorial and perform the examples, you will need to install the [Monitor
+Add-on package](../../09.Add-ons/20.Monitor/10.Installation/docs.md) and the [Demo monitors package](../../10.Downloads/docs.md#demo-monitors) on your device. If
 you have followed the [get started tutorial](../01.Preparation/docs.md) to prepare your
-device, the Monitor Add-on and Demo monitors package should already be
+device, the Monitor Add-on and Demo monitors packages should already be
 installed.
 
 > To quickly verify the required dependencies are installed on your device, run
 > the following commands:
 >
 > ```bash
-> mender --version && \
->   docker --version && \
->   mender-monitorctl --version
+> mender --version && mender-monitorctl --version
 > ```
-> To check if the example monitoring subsystem and demo check definitions are installed.
-> For monitoring subsystems the run following command:
+>>```bash
+>>3.5.1	runtime: go1.17.13
+>>Mender Monitoring control utility v1.3.0
+>>
+>>Usage: mender-monitorctl command [options]
+>>Use "mender-monitorctl help" for more information about available commands and options.
+>>```
+
+> To check if the monitoring subsystems are installed, run following command:
 >
 >```bash
 > ls -lAh /etc/mender-monitor/monitor.d | grep -v '^d'
-> -rwxr-xr-x 1 root root 2669 Aug 17 20:09 connectivity.sh
-> -rwxr-xr-x 1 root root 2298 Mar 10 09:37 dbus.sh
-> -rwxr-xr-x 1 root root 2498 Aug 18 01:14 diskusage.sh
-> -rwxr-xr-x 1 root root 3738 Mar 10 09:37 log.sh
-> -rwxr-xr-x 1 root root 3016 Mar 10 09:37 service.sh
 >```
+>>```bash
+>> -rwxr-xr-x 1 root root 2669 Aug 17 20:09 connectivity.sh
+>> -rwxr-xr-x 1 root root 2298 Mar 10 09:37 dbus.sh
+>> -rwxr-xr-x 1 root root 2498 Aug 18 01:14 diskusage.sh
+>> -rwxr-xr-x 1 root root 3738 Mar 10 09:37 log.sh
+>> -rwxr-xr-x 1 root root 3016 Mar 10 09:37 service.sh
+>>```
 >
-> For the check definitions, run following command:
+> To verify that the example check definitions are installed, please run the following command:
 >
 >```bash
 > ls -lAh /etc/mender-monitor/monitor.d/available/ | grep -v '^d'
-> -rwxr-xr-x 1 root root 176 Aug 17 20:09 connectivity_example.sh
-> -rwxr-xr-x 1 root root 173 Aug 18 01:14 diskusage_root_space.sh
-> -rwxr-xr-x 1 root root 201 Aug 17 20:09 log_mender_client.sh
-> -rwxr-xr-x 1 root root 203 Aug 17 20:09 log_mender_connect.sh
-> -rwxr-xr-x 1 root root 297 Aug 17 20:09 log_usb_disconnect.sh
-> -rw-r--r-- 1 root root  43 Jun 20 20:06 service_cron.sh
 >```
 
-!!!!! The `docker --version` line above is only necesary if you want to test
-!!!!! the _Docker container restart_ example below. If the Docker Engine is missing, you
-!!!!! can get it by following [Docker's official guide](https://docs.docker.com/engine/install/?target=_blank).
+>> ```bash
+>> -rwxr-xr-x 1 root root 176 Aug 17 20:09 connectivity_example.sh
+>> -rwxr-xr-x 1 root root 173 Aug 18 01:14 diskusage_root_space.sh
+>> -rwxr-xr-x 1 root root 201 Aug 17 20:09 log_mender_client.sh
+>> -rwxr-xr-x 1 root root 203 Aug 17 20:09 log_mender_connect.sh
+>> -rwxr-xr-x 1 root root 297 Aug 17 20:09 log_usb_disconnect.sh
+>> -rw-r--r-- 1 root root  43 Jun 20 20:06 service_cron.sh
+>> ```
 
 ## Demo alerts
 
@@ -219,7 +225,10 @@ After connection to `example.com` is restored, an _OK_ Alert will show up in the
 
 ### Docker container restart
 
-!!!!! Note: Docker needs to be [installed](https://docs.docker.com/engine/install/) on the device
+!!!!! In this example, Docker Engine must be installed in the device. 
+!!!!! Please validate with `docker --version` that it is installed.
+!!!!! If it is missing, you can get it by following [Docker's official guide](https://docs.docker.com/engine/install/?target=_blank).
+
 
 Applications may restart sporadically when they encounter new situations like
 intermittent connectivity. As they are often automatically started again the
