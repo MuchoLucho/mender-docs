@@ -20,56 +20,8 @@ Compared to classic approaches of sending all the data about all the nodes
 to the server all the time, this leads to massive bandwidth savings and
 allows instant local processing.
 
-## Alerts
 
-Each time a systemd service is not running, a log file contains a given pattern,
-or a signal is received on a given D-Bus bus, an email containing the alert is sent to
-all users who have access to the Mender Server and the given device.
-You can mute these email notifications from the Mender Server settings.
-
-<!-- There is one exception to the above rule: if a systemd service goes up and down often
-enough we consider it to be _flapping_. When `mender-monitor` detects this, the [systemd 
-service monitoring subsystem](20.Monitoring-subsystems/docs.md#service) sends a _flapping alert_ 
-and does not send anything else until the number of the systemd service state changes per one 
-`FLAPPING_INTERVAL` goes below `FLAPPING_COUNT_THRESHOLD`. See the 
-[advanced configuration](30.Advanced-configuration/docs.md) chapter for more information 
-about these settings. -->
+To get a quick working example check the [monitoring](../../01.Get-started/05.Monitor/docs.md) section of the Get started chapter.
 
 
-## Architecture
-
-The Monitor add-on consists of two main parts:
-
-- The [API](https://docs.mender.io/api/#devices-api-device-monitor) 
-to the backend Mender Server that allows you to integrate with existing solutions.
-- The `mender-monitor` systemd service that performs the monitoring subsystem's checks on the devices.
-
-The `mender-monitor` service sets the enviroment using the [check definition](20.Monitoring-subsystems/docs.md#check-definition) script, then it executes and validate the [monitoring subsystem](20.Monitoring-subsystems/docs.md#monitoring-subsystems) conditions to detect particular events and sends alerts to the Mender Server if the conditions are met. As shown in the diagram below.
-
-![Monitor simplified flow](simple-monitor-flow.png)
-
-These alerts are also accessible via the Mender UI by clicking `DEVICES` on the left panel,
-then choosing a device, and tap the `Monitoring` tab.
-
-If you need to customize your monitoring solution, you have the option to
-use a set of Bash functions located at `/usr/share/mender-monitor/lib/`.
-These functions conform the `mender-monitor` service and can be invoked 
-directly from your scripts.
-
-### Running and configuring
-
-To start the `mender-monitor` daemon, run the following command:
-
-```bash
-systemctl start mender-monitor
-```
-
-You can view the `mender-monitor` service's logs running the following command:
-
-```bash
-journalctl -u mender-monitor
-```
-
-To configure the `mender-monitor` service, see the 
-[advanced configuration](30.Advanced-configuration/docs.md) chapter for more
-information about the available configuration.
+For other monitoring related topics select the subchapter of interest.
