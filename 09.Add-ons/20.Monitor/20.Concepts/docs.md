@@ -77,9 +77,3 @@ The same pattern holds for disabling and deleting the checks.
 mender-monitorctl disable log crasher_app
 mender-monitorctl delete log crasher_app
 ```
-
-
-## Buffering alerts
-
-
-TODO: How to configure the buffering of alerts
