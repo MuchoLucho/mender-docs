@@ -8,8 +8,7 @@ taxonomy:
 
 ## Log
 
-The log subsystem will look for a log pattern or a data stream. 
-
+The log subsystem will look for a log pattern or a data stream.
 
 ```
 #                       "Subsystem"     "Check name"          "Log Pattern"      "Log file or data stream"             "[Optional] Log pattern expiration"
@@ -46,23 +45,25 @@ mender-monitorctl create    log         crasher_app     ".*container kill.*name=
 ```
 
 
-
-
 ## D-Bus
 
 Every time a D-Bus signal matching the watch expression is received, it will trigger a check that will send an alert from the monitoring subsystem. You can adapt the configuration to any D-Bus signal and pattern based on your use case.
 
+Let's assume you want to raise an alert every time `u-power` raises a signal. To this end you need to create the check with as follows:
+
 ```bash
-#                         "Subsystem"     "Check name"      "Dbus name"      "Dbus pattern"       "Dbus watch expression" 
-mender-monitorctl create     dbus          dbus_check          upower            ""                       " "
+#                         "Subsystem"     "Check name"      "Dbus name"      "Dbus pattern"       "Dbus watch expression"                                                                                       "[Optional] Dbus alert expiration"
+mender-monitorctl create     dbus          dbus_check          u-power            ""              "type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',path=/org/freedesktop/UPower/devices/battery_BAT0"   5
 ```
 
 Arguments:
 
-* Dbus name - the regex pattern to look for withing the log content
-* Dbus pattern - Log file or data stream - the source of the log content
-* Dbus watch expression   - time that needs to pass until the pattern match is considered invalidated
-
+* Dbus name - the name of the watcher
+* Dbus pattern - the grep pattern to match on (in the example above empty to match on all notifications)
+* Dbus watch expression - the watch pattern passed to dbus-monitor (can be empty)
+* [Optional] Dbus alert expiration  - time that needs to pass until the pattern match is considered invalidated
+    * i.e. if ERROR is detected once and no new errors are detected in the next 5 seconds, monitoring will report all issues were resolved.
+    * if nothing is specified the `DEFAULT_DBUS_ALERT_EXPIRATION_SECONDS` is used.
 
 
 ## Service
