@@ -5,7 +5,7 @@ taxonomy:
     label: user guide
 ---
 
-!!!!! It is required to have the _Mender Monitor add-on_ enabled in your account.
+!!!!! It is required to have the _Mender Monitor_ add-on enabled in your account.
 !!!!! See [the Mender features page](https://mender.io/product/features?target=_blank)
 !!!!! for an overview of all Mender plans and features.
 

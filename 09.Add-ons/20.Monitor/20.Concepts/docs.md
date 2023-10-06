@@ -18,14 +18,14 @@ The server accepts the alerts and reports them to the fleet manager through the 
 
 
 `mender-monitor` needs to provide a way to define a condition for an alert is.
-It does so with the combination of two mechanisms - subsystems and checks.  
+It does so with the combination of two components - subsystems and checks.  
 
-A monitoring subsystem represents the generalized logic needed for detecting a specific type of event on a device.
+A **monitoring subsystem** represents the generalized logic needed for detecting a specific type of event on a device.
 For example, the logic to detect an error log in a log file is different from the one to detect a problematic dbus event.
 
 The subsystem on its own doesn't have enough information to be executed.
-This is where the check comes in.
-A check contains the variable definitions needed for the subsystem to execute. 
+This is where the checks comes in.
+A **check** contains the variable definitions needed for the subsystem to be executed. 
 
 Putting it all together, the `mender-monitor` service sets the environment using the [check](20.Monitoring-subsystems/docs.md#check-definition).
 Then it executes the [monitoring subsystem](20.Monitoring-subsystems/docs.md#monitoring-subsystems) for each check coupled with that subsystem.

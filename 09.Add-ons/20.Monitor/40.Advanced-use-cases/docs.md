@@ -26,7 +26,7 @@ The `mender-monitor` service supports the following directory structure:
 ```
 
 
-What is listed under the root level of `monitor.d` are the subsystems (`log.sh`, `dbus.sh` and `service.sh`).
+What is listed under the root level of `monitor.d` are the Subsystems (`log.sh`, `dbus.sh` and `service.sh`).
 
 The directory `monitor.d/available` lists the created Checks. By using `create` and `delete`, `mender-monitorctl` will create or delete a Check which means it will create the file in the correct naming convention and define variables within it. The name convention follows the structure:
 
@@ -34,30 +34,88 @@ The directory `monitor.d/available` lists the created Checks. By using `create` 
 <monitoring_subsystem_name>_<check_name>.sh
 ```
 
-For examples listed one is a Check for the log subsystem (**log**_auth_root_session.sh) and the other for the service (**service**_mender-connect.sh).
+For examples listed one is a Check for the log Subsystem (**log**_auth_root_session.sh) and the other for the service (**service**_mender-connect.sh).
 
 
-A Check needs to be enabled before it will be taken into consideration. By runing mender-monitorctl with the enable or disable parameters, it will create a symbolic link inside the enabled folder to the right check from the available folder. From this folder the mender-monitor service executes the defined subsystems based on the enabled checks.
+A Check needs to be enabled before it will be taken into consideration. By runing `mender-monitorctl` with the `enable` or `disable` parameters, it will create a symbolic link inside the `enabled` folder to the right check from the `available` folder. From this folder the `mender-monitor` service executes the defined Subsystems based on the enabled Checks.
 
 
 ## Advanced use cases
 
-The following use cases go beyond the standard usage of mender monitor but are possible to achieve given the tools customisable design.
+The following use cases extend beyond the typical usage of Mender Monitor, but they are attainable due to the tool's customizable design.
 
 ### Bypassing mender-monitorctl
 
-Since the Checks and subsystems are represented by a directory structure there is an option to modify the files directly instead of using the CLI tool. 
-
+Since the Checks and Subsystems are represented by a directory structure there is an option to modify the files directly instead of using the CLI tool. 
 
 ### Using the library 
+To use the Mender Monitor library, first you need to source the enviroment with the function set provided to interact with the Mender Server and Monitor logic.
 
+```bash
+cd /usr/share/mender-monitor
+source lib/monitor-lib.sh
+```
 
-### Pseudo subsystems
+Once the enviroment is sourced, there will be new functions available to use. For example `monitor_send_alert`, this function is used to send the alert data (_OK_ or _CRITICAL_) to the Mender Server.
 
+This function takes the following parameters:
 
-[A] Is this really a thing?
+```bash
+monitor_send_alert "alert_type" "alert_description" "alert_details" "subject_name" "subject_status" "subject_type" "log_pattern" "log_file_path" "lines_before" "line_matching" "lines_after"
+```
 
+**Sending a OK alert**
 
-### Writing new subsystems
+By sending an _OK_ alert you can clean your alert level. Assuming you did not implement it on your
+subsystem, then you can force it by running a command similar to the one below (assuming a _service subsystem_):
+
+```bash
+SERVICE_NAME = "your-service-name"
+monitor_send_alert OK "Service ${SERVICE_NAME} running" "The main process is present again" "${SERVICE_NAME}" "running" "service"
+```
+
+### Pseudo Subsystems
+
+##### Docker events
+
+The log subsystem is a base for so-called _pseudo subsystems_. One of them
+is the `dockerevents` subsystem, which you can use to monitor any events as reported by `docker events`
+command.
+
+For instance, to monitor for `kill` event on a container named `scanner` you need to create a check with
+`mender-monitorctl` command and enable it in the following way:
+
+```bash
+mender-monitorctl create dockerevents scanner_kill scanner kill 16
+mender-monitorctl enable dockerevents scanner_kill
+systemctl restart mender-monitor
+```
+
+With the above configuration you will receive a `CRITICAL` alert if someone or something kills your scanner container.
+This will lead the Mender UI to present the device in a critical monitoring state. Since there is no natural
+way to recover from this situation, we are using the last and optional argument
+to the `mender-monitorctl create dockerevents` command which stands for the number of seconds
+after which the Mender Monitor daemon sends an automatic _OK_. In that way after 16s without
+a `kill` event on the container the device will recover to normal state.
+
+The resulting check uses the log monitor, as you can see with:
+
+```bash
+cat /etc/mender-monitor/monitor.d/available/log_scanner_kill.sh
+```
+
+> ```bash
+> # This file was autogenerated by Monitoring Utilities based on the configuration
+> SERVICE_NAME="scanner_kill"
+> LOG_PATTERN=".*container kill.*name=scanner.*"
+> LOG_FILE="@docker events"
+> LOG_PATTERN_EXPIRATION=16
+> LOG_ALERT_DESCRIPTION="Docker container scanner kill"
+> LOG_ALERT_DETAILS="Alert was raised due to:%line_matching"
+> LOG_ALERT_STATUS=DOCKEREVENTS_CONTAINER_RESTART
+> LOG_ALERT_TYPE=docker_event
+> ```
+
+### Writing new Subsystems
 
 [A] Examples from the demo can serve as references
