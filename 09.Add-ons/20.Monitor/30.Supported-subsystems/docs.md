@@ -50,13 +50,12 @@ mender-monitorctl create    log         crasher_app     ".*container kill.*name=
 
 ## D-Bus
 
-TODO: Not really sure what is what sensible things to use here. Would go for a simple dbus service, not sure which one
+Every time a D-Bus signal matching the watch expression is received, it will trigger a check that will send an alert from the monitoring subsystem. You can adapt the configuration to any D-Bus signal and pattern based on your use case.
 
 ```bash
 #                         "Subsystem"     "Check name"      "Dbus name"      "Dbus pattern"       "Dbus watch expression" 
 mender-monitorctl create     dbus          dbus_check          upower            ""                       " "
 ```
-
 
 Arguments:
 
