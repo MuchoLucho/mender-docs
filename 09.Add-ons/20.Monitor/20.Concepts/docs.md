@@ -25,15 +25,17 @@ For example, the logic to detect an error log in a log file is different from th
 
 The subsystem on its own doesn't have enough information to be executed.
 This is where the checks comes in.
+
 A **check** contains the variable definitions needed for the subsystem to be executed. 
 
-Putting it all together, the `mender-monitor` service sets the environment using the [check](20.Monitoring-subsystems/docs.md#check-definition).
-Then it executes the [monitoring subsystem](20.Monitoring-subsystems/docs.md#monitoring-subsystems) for each check coupled with that subsystem.
+Additionally, we offer an additional level of abstraction for the subsystems known as **pseudo subsystems**. These are predefined configurations built upon existing subsystems, designed to streamline the process of creating new checks.
+
+Putting it all together, the `mender-monitor` service sets the environment using the _check_ definition.
+Then it executes the _monitoring subsystem_ for each check coupled with that subsystem.
 If this results in a detection of a problematic, an alert is sent to the server.
 This is shown in the diagram below.
 
 ![Monitor simplified flow](simple-monitor-flow.png)
-
 
 The supported way of using the monitoring add-on is to create the check for the supported subsystems which will detect the problematic events on the device.
 
@@ -49,7 +51,7 @@ You always create a check for a specific subsystem.
 
 In the example below we're creating a check for the log subsystem.
 
-```
+```bash
 #                       "Subsystem"     "Check name"          "Log Pattern"      "Log file"             "Duration of match validity [Optional]"
 mender-monitorctl create    log         crasher_app             ERROR          /root/crasher.log                        5
 ```
@@ -64,7 +66,7 @@ Under the hood, a check is nothing more than a collection of those variables in 
 Once the check is created, it needs to be enabled before `mender-monitor` will start using it to detect issues.
 To enable it we again reference both the subsystem and the check name
 
-```
+```bash
 #                            "Subsystem"     "Check name" 
 mender-monitorctl enable         log          crasher_app
 ```
@@ -73,7 +75,7 @@ mender-monitorctl enable         log          crasher_app
 The same pattern holds for disabling and deleting the checks.
 
 
-```
+```bash
 mender-monitorctl disable log crasher_app
 mender-monitorctl delete log crasher_app
 ```
