@@ -14,7 +14,7 @@ The Monitor add-on consists of two main parts:
 The `mender-monitor` service is responsible for detecting issues on the device.
 A detected issue triggers an alert which is reported to the server using the API endpoints.
 
-The server accepts the alerts and reports them to the fleet manager through the UI, email or an API endpoint.
+The server accepts the alerts and reports them to the fleet manager through the UI or email.
 
 
 `mender-monitor` needs to provide a way to define a condition for an alert is.
@@ -22,13 +22,10 @@ It does so with the combination of two components - subsystems and checks.
 
 A **monitoring subsystem** represents the generalized logic needed for detecting a specific type of event on a device.
 For example, the logic to detect an error log in a log file is different from the one to detect a problematic dbus event.
-
 The subsystem on its own doesn't have enough information to be executed.
 This is where the checks comes in.
 
 A **check** contains the variable definitions needed for the subsystem to be executed. 
-
-Additionally, we offer an additional level of abstraction for the subsystems known as **pseudo subsystems**. These are predefined configurations built upon existing subsystems, designed to streamline the process of creating new checks.
 
 Putting it all together, the `mender-monitor` service sets the environment using the _check_ definition.
 Then it executes the _monitoring subsystem_ for each check coupled with that subsystem.
@@ -79,3 +76,5 @@ The same pattern holds for disabling and deleting the checks.
 mender-monitorctl disable log crasher_app
 mender-monitorctl delete log crasher_app
 ```
+
+Please read proceed to read about the [supported subsystems](../30.Supported-subsystems/docs.md) which you can use to create custom checks.

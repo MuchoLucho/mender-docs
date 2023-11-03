@@ -63,24 +63,22 @@ installed.
 >> -rw-r--r-- 1 root root  43 Jun 20 20:06 service_cron.sh
 >> ```
 
-## Demo alerts
+## Demo Checks
 
-The Mender Monitor Add-on includes a collection of Demo Alerts designed to showcase essential use cases, available through the [Demo monitors package](../../10.Downloads/docs.md#demo-monitors) (Debian package) or in the `examples` directory in case of the [Yocto package](../../05.Operating-System-updates-Yocto-Project/05.Customize-Mender/docs.md#monitor). This is meant as a starting point to try it out. You can
-also customize and define your own [monitoring subsystem](../../09.Add-ons/20.Monitor/20.Monitoring-subsystems/docs.md) once you
-are ready.
+The Mender Monitor Add-on includes a collection of Demo Checks designed to showcase essential use cases, available through the [Demo monitors package](../../10.Downloads/docs.md#demo-monitors) (Debian package) or in the `examples` directory in case of the [Yocto package](../../05.Operating-System-updates-Yocto-Project/05.Customize-Mender/docs.md#monitor). This is meant as a starting point to try it out. You can also customize and define your own [Checks](../../09.Add-ons/20.Monitor/20.Concepts/docs.md#creating-custom-checks) once you are ready.
 
 Email notifications are automatically generated in addition to UI notifications
-shown in the screenshots below. While going through the examples in this
+shown in the screenshots following the examples. While going through the examples in this
 tutorial, watch the email inbox of your Mender user to see that you get
-notified about Alerts triggered and cleared on the device. For information on restoring manually the alert level, please refer to [Alert cleaning](../../09.Add-ons/20.Monitor/20.Monitoring-subsystems/docs.md#alert-cleaning).
+notified about Alerts triggered and cleared on the device. 
 
-!! The default configuration for `mender-monitorctl` command requires
-!! read-write access to the `/etc/mender-monitor` directory, which on most systems
-!! means the need to switch to super user, or run with `sudo`. 
+! The default configuration for `mender-monitorctl` command requires
+! read-write access to the `/etc/mender-monitor` directory, which on most systems
+! means the need to switch to super user, or run with `sudo`. 
 
-!! For read-only filesystem, it is essential to establish a symbolic link 
-!! to a writable directory. This symlink is required for the purpose of 
-!! creating, modifying, and enabling alert check.
+! For read-only filesystem, it is essential to establish a symbolic link 
+! to a writable directory. This symlink is required for the purpose of 
+! creating, modifying, and enabling alert check.
 
 ### USB disconnect
 
@@ -104,14 +102,17 @@ can inspect in the device details in the Mender UI:
 
 ![Connectivity alarm OK](log-usb-alarm.png)
 
-!!!!! Note: This alert will remain unless a manual [alert cleaning](../../09.Add-ons/20.Monitor/20.Monitoring-subsystems/docs.md#alert-cleaning) is performed.
+!!!!! Note: This alert will remain unless a manual [alert cleaning](../../09.Add-ons/20.Monitor/40.Advanced-use-cases/docs.md#alert-cleaning ) is performed:
+!!!!! ```
+!!!!! cd /usr/share/mender-monitor
+!!!!! source lib/monitor-lib.sh
+!!!!! monitor_send_alert OK "Log file contains \[.*\] +usb [\w\-\.]+: USB disconnect" "\[.*\] +usb [\w\-\.]+: USB disconnect present in /var/log/kern.log" "log_usb_disconnect" LOGCONTAINS "log" "\[.*\] +usb [\w\-\.]+: USB disconnect" "/var/log/kern.log" 
+!!!!! ```
 
 ### Disk usage
 
 Running low on key device resources like disk space, often due to growing
-log files, can disrupt the product's functionality. To prevent this, it's
-advisable to enable disk space Alerts. These alerts identify high disk
-usage, allowing timely action to avoid downtime.
+log files, can disrupt the product's functionality. These example shows you how to monitor for  high disk usage, allowing timely action to avoid downtime.
 
 First, enable the `diskusage` check for the root space partition called
 `root_space` by running the following command:
@@ -123,13 +124,11 @@ sudo mender-monitorctl enable diskusage root_space
 Then check the current disk usage.
 
 ```bash
-df -h
+df -h /
 
-Filesystem                 Size  Used Avail Use% Mounted on
-...
-/dev/mapper/homedisk-root   49G   31G  15.9G  68% /
-...
-
+# Output:
+# Filesystem      Size  Used Avail Use% Mounted on
+# /dev/root       3.4G  1.4G  1.9G  42% /
 ```
 
 With the `diskusage` monitoring subsystem checking the disk space, it will send 
@@ -144,13 +143,11 @@ fallocate -l 10G ~/large-file
 And the disk usage goes above the 75% treshold
 
 ```bash
-df -h
+df -h /
 
-Filesystem                 Size  Used Avail Use% Mounted on
-...
-/dev/mapper/homedisk-root   49G   41G  5.9G  88% /
-...
-
+# Output:
+# Filesystem      Size  Used Avail Use% Mounted on
+# /dev/root       3.4G  3.4G     0 100% /
 ```
 
 And an alert shows up in the UI.
@@ -164,23 +161,6 @@ file is removed and the disk space is less than the threshold.
 rm ~/large-file
 ```
 
-You can modify the threshold value according to your needs by editing the check definition file `diskusage_root_space.sh`:
-
-```bash
-cat /etc/mender-monitor/monitor.d/available/diskusage_root_space.sh
-```
-> ```bash
-> # Copyright 2022 Northern.tech AS
-> #
-> #    All Rights Reserved
-> 
-> #
-> # Monitor the whole rootfs space usage
-> #
-> DISKUSAGE_NAME="/"
-> # Report on 3/4 full disk
-> DISKUSAGE_THRESHOLD=75
-> ```
 
 ### Connectivity
 
@@ -188,10 +168,10 @@ Ongoing connectivity issues may cause the device application to hang or
 malfunction, disrupting the user experience or function of the product. This
 Alert is one example how to detect connectivity issues. 
 
-Mender stores triggered Alerts on the device. Therefore, even if Mender cannot
-send the Alerts to the server immediately you will get notified about triggered
-Alerts later on, once the device regains connectivity. This means that even
-during offline periods, Alerts are triggered.
+Mender stores triggered Checks on the device. Therefore, even if Mender cannot
+send the Checks to the server immediately you will get notified about triggered
+Checks later on, once the device regains connectivity. This means that even
+during offline periods, Checks are triggered.
 
 First, enable the `connectivity` check called `example` by running the following command:
 
@@ -199,7 +179,7 @@ First, enable the `connectivity` check called `example` by running the following
 sudo mender-monitorctl enable connectivity example
 ```
 
-This will enable a `connectivity` monitoring subsystem, which sends HTTP HEAD
+This will enable a Check using the demo `connectivity` monitoring subsystem, which sends HTTP HEAD
 requests to `example.com`, making sure that it is responding.
 
 To trigger the alert, let us stop the traffic to `example.com` by
